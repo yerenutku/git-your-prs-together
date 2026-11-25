@@ -1,0 +1,29 @@
+#ghc-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 2147483647;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  max-width: 90vw;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #bf8700;
+  color: #fff;
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  animation: ghc-bounce 1.6s ease-in-out infinite;
+}
+#ghc-bar[hidden] { display: none; }
+#ghc-bar:hover { animation-play-state: paused; }
+#ghc-bar a { color: #fff; text-decoration: underline; max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
+#ghc-bar .ghc-chip { display: inline-flex; gap: 4px; align-items: center; }
+#ghc-bar button { background: none; border: 0; color: #fff; cursor: pointer; font-size: 16px; line-height: 1; }
+@keyframes ghc-bounce {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -10px); }
+}
+@media (prefers-reduced-motion: reduce) { #ghc-bar { animation: none; } }
+#ghc-bar.ghc-error { background: #cf222e; animation: none; }

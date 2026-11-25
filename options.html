@@ -1,0 +1,56 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Git Your PRs Together</title>
+<style>
+  body { font: 14px system-ui; max-width: 640px; margin: 32px auto; }
+  label { display: block; margin-top: 16px; font-weight: 600; }
+  input[type=text], input[type=password], input[type=number], textarea { width: 100%; box-sizing: border-box; padding: 6px; font: inherit; }
+  small { color: #666; font-weight: 400; }
+  h2 { margin-top: 32px; font-size: 16px; }
+  .error { color: #c62828; }
+  #welcome { background: #f3effc; border-radius: 8px; padding: 12px 16px; }
+</style>
+<h1>Git Your PRs Together</h1>
+
+<p id="welcome" hidden><strong>Welcome!</strong> Which GitHub do you use? Type it below and click <strong>Save</strong> at the bottom. Nothing runs until then.</p>
+<label>Your GitHub
+  <small>github.com, or your company's GitHub Enterprise Cloud address, like <code>yourcompany.ghe.com</code>. Self-hosted GitHub Enterprise Server isn't supported yet.</small>
+  <input id="host" type="text" placeholder="github.com" spellcheck="false" autocapitalize="off" />
+  <small id="hostError" class="error"></small>
+</label>
+<label>Personal access token
+  <small>(scopes: repo, read:user. Optional: PR data comes from GitHub's own pages with this browser's sign-in. The token is the fallback when that fails, and gives "files changed since my approval". Stored locally.)</small>
+  <input id="token" type="password" />
+</label>
+
+<label>Assignee allow-lists
+  <small>One per line: <code>owner/repo: login1, login2</code>. Repos without a line use the repo's contributors from GitHub's contributors graph (this browser's sign-in).</small>
+  <textarea id="repos" rows="6"></textarea>
+</label>
+
+<label><input id="avEnabled" type="checkbox" /> Auto-mark files as Viewed while scrolling
+  <small>A file is ticked once its top and bottom have both been on screen and it has scrolled out of the top. The last files on the page are ticked when you point at the review button, another PR tab, or leave the page.</small></label>
+
+<p><small>Per file: each file header in "Files changed" has an "Auto" switch left of GitHub's Viewed button. Turn it off to keep that one file from being ticked automatically. Remembered per PR.</small></p>
+
+<h2>Notifications</h2>
+<p><small>Desktop notifications from the same poll as the rest of the extension (every minute, with this browser's GitHub sign-in, or the token above). Each event notifies once; nothing old is replayed when you turn a type on. Missed one? The PR lists keep showing it: "N new comments" on your PRs, a count on "My threads" and "Re-review", until you open the PR.</small></p>
+<label><input id="nReReview" type="checkbox" /> A re-review is needed
+  <small>You reviewed a PR before and someone asked you to review it again, or your approval was dismissed (usually by a new push).</small></label>
+<label><input id="nReady" type="checkbox" /> One of my PRs is ready to merge
+  <small>GitHub says all merge requirements are met (or: approved and checks passed). Once per commit.</small></label>
+<label><input id="nAttention" type="checkbox" /> One of my PRs needs attention
+  <small>Someone reviewed or commented on your PR, or the checks on its latest commit passed.</small></label>
+<label><input id="nThreads" type="checkbox" /> New message in a thread I'm following
+  <small>A reply after your last comment, in a PR you commented on or reviewed (last 3 weeks).</small></label>
+<p><button id="testNotify" type="button">Send a test notification</button> <span id="testStatus"></span></p>
+<p><small>Nothing pops up? In macOS System Settings → Notifications → your browser (e.g. Arc): "Allow notifications" on and the alert style set to Banners or Alerts. With "None" they only land in Notification Center.</small></p>
+
+<h2>Status</h2>
+<p id="dataStatus"><small>…</small></p>
+<p><small>Last notifications sent:</small></p>
+<ul id="notifyLog"><li><small>none yet</small></li></ul>
+
+<p><button id="save">Save</button> <span id="status"></span></p>
+<script src="host.js"></script>
+<script src="options.js"></script>

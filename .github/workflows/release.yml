@@ -1,0 +1,111 @@
+# Every push and pull request: the fake-GitHub tests.
+# Every push to main with a new version in manifest.json: build the zips, make a GitHub release (tag v<version>) and
+# submit it to each store whose secrets are set. Pushing without bumping the version only runs the tests.
+# RELEASING.md explains the secrets and the one-time manual first submission per store.
+name: Test and release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      republish:
+        description: "Submit the current version to the stores again (after a store step failed)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e:notify
+      - run: npm run e2e:reviewers
+      - run: npm run e2e:host
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots
+          path: e2e/out/
+
+  release:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      # Chrome Web Store (API v2)
+      CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+      CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+      CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+      CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+      CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+      # addons.mozilla.org
+      AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+      AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+      # Microsoft Edge Add-ons
+      EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+      EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+      EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Is this version new?
+        id: v
+        run: |
+          version=$(node -p 'require("./manifest.json").version')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if gh release view "v$version" >/dev/null 2>&1; then
+            echo "new=false" >> "$GITHUB_OUTPUT"
+            echo "v$version is already released: nothing to do."
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build the zips
+        if: steps.v.outputs.new == 'true' || inputs.republish
+        run: npm run package
+
+      - name: GitHub release
+        if: steps.v.outputs.new == 'true'
+        run: >
+          gh release create "v${{ steps.v.outputs.version }}"
+          dist/chrome-${{ steps.v.outputs.version }}.zip dist/firefox-${{ steps.v.outputs.version }}.zip
+          --target "$GITHUB_SHA" --title "v${{ steps.v.outputs.version }}" --generate-notes
+
+      - name: Chrome Web Store
+        if: (steps.v.outputs.new == 'true' || inputs.republish) && env.CWS_REFRESH_TOKEN != ''
+        env:
+          EXTENSION_ID: ${{ env.CWS_EXTENSION_ID }}
+          PUBLISHER_ID: ${{ env.CWS_PUBLISHER_ID }}
+          CLIENT_ID: ${{ env.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ env.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ env.CWS_REFRESH_TOKEN }}
+        run: npx --yes chrome-webstore-upload-cli@4.0.2 --source "dist/chrome-${{ steps.v.outputs.version }}.zip"
+
+      - name: Firefox Add-ons
+        if: (steps.v.outputs.new == 'true' || inputs.republish) && env.AMO_JWT_SECRET != ''
+        env:
+          WEB_EXT_API_KEY: ${{ env.AMO_JWT_ISSUER }}
+          WEB_EXT_API_SECRET: ${{ env.AMO_JWT_SECRET }}
+        run: npx --yes web-ext@10.8.0 sign --channel listed --source-dir dist/firefox --artifacts-dir dist/amo --approval-timeout 0
+
+      - name: Edge Add-ons
+        if: (steps.v.outputs.new == 'true' || inputs.republish) && env.EDGE_API_KEY != ''
+        run: node scripts/publish-edge.mjs "dist/chrome-${{ steps.v.outputs.version }}.zip" "v${{ steps.v.outputs.version }}"

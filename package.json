@@ -1,0 +1,18 @@
+{
+  "name": "git-your-prs-together",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "e2e:login": "node e2e/login.mjs",
+    "e2e:check": "node e2e/check.mjs",
+    "e2e:reload": "node e2e/reload.mjs",
+    "e2e:notify": "node e2e/notify.mjs",
+    "e2e:reviewers": "node e2e/reviewers.mjs",
+    "e2e:host": "node e2e/host.mjs",
+    "package": "node scripts/package.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.52.0"
+  },
+  "license": "MIT"
+}

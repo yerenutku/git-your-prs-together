@@ -1,0 +1,9 @@
+node_modules/
+# Screenshots, logs and reports from the e2e tests: they show real PRs, names and avatars from GitHub
+e2e/out/
+e2e/local.json
+dist/
+.DS_Store
+# Local only: Claude settings and icon drafts
+.claude/
+generated_images/

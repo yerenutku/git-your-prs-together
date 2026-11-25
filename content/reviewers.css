@@ -1,0 +1,66 @@
+/* Reviewers picker: our contributors list replaces GitHub's list until "Show all users from the company" */
+[data-ghc-rv="contrib"] ul[role="listbox"],
+[data-ghc-rv="contrib"] [data-ghc-rv-input] { display: none !important; } /* GitHub's list and its search box */
+
+.ghc-rv { padding: 4px 8px 8px; font-size: 14px; }
+.ghc-rv-search {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 4px 0 2px;
+  padding: 5px 10px;
+  border: 1px solid var(--borderColor-default, #d1d9e0);
+  border-radius: 6px;
+  background: var(--bgColor-default, #fff);
+  color: var(--fgColor-default, #1f2328);
+  font: inherit;
+}
+.ghc-rv-search:focus { outline: 2px solid var(--fgColor-accent, #0969da); outline-offset: -1px; }
+.ghc-rv-head {
+  padding: 6px 8px 4px;
+  color: var(--fgColor-muted, #656d76);
+  font-size: 12px;
+  font-weight: 600;
+}
+.ghc-rv-list { list-style: none; margin: 0; padding: 0; }
+.ghc-rv-item, .ghc-rv-mode {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--fgColor-default, #1f2328);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ghc-rv-item:hover, .ghc-rv-mode:hover { background: var(--bgColor-neutral-muted, rgba(175, 184, 193, 0.2)); }
+.ghc-rv-check {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--borderColor-default, #d1d9e0);
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 14px;
+  text-align: center;
+  color: var(--fgColor-onEmphasis, #fff);
+}
+.ghc-rv-on .ghc-rv-check { background: var(--bgColor-accent-emphasis, #0969da); border-color: transparent; }
+.ghc-rv-avatar { flex: none; width: 20px; height: 20px; border-radius: 50%; }
+.ghc-rv-login { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.ghc-rv-meta { flex: none; color: var(--fgColor-muted, #656d76); font-size: 12px; }
+.ghc-rv-busy { opacity: 0.5; cursor: progress; }
+.ghc-rv-note { padding: 6px 8px; color: var(--fgColor-muted, #656d76); font-size: 12px; }
+.ghc-rv-warn { color: var(--fgColor-danger, #d1242f); }
+.ghc-rv-all {
+  margin-top: 4px;
+  border-top: 1px solid var(--borderColor-muted, #d1d9e0b3);
+  border-radius: 0 0 6px 6px;
+  color: var(--fgColor-accent, #0969da);
+  font-weight: 600;
+}
+.ghc-rv-mode:not(.ghc-rv-all) { color: var(--fgColor-accent, #0969da); font-size: 12px; font-weight: 600; }
