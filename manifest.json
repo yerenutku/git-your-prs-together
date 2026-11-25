@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArB6tNqdUg3tmvjVjr6lU9yBOWhTZzSoGsFOym++g3dnxVkyUxZXOA/GkQhm9kdtPY8KG33ROD04OwrMNGFOl2eDvUeLfR2DXl0jTjYXnF7EZjX6QAte9AEG0Jmc8cDnZItV7smX7oMiiCRrQHwwBi7bCk+fPfMA4wRWG5LsptfWfB/ZOwBt1OkHW4AB+2iOwepjqQtYasP7aGuWkCYxULQY790Nm/bsq8RmVNpNOpIui7vnelxaN1lgk45m+1je/LHRgBFvkIHilP0sUbf+qs4b+YqOJ1duL8dCc0KAJNHFdCmjSgSpUlUFC259XWt3kESTbtQQjJTOk44gEra3gKQIDAQAB",
   "name": "Git Your PRs Together",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Know when it's your turn on a GitHub pull request: notifications, PR states, My threads and Re-review tabs, auto-viewed files.",
   "icons": {
     "16": "icons/icon16.png",
