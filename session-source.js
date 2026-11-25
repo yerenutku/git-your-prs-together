@@ -31,7 +31,13 @@ async function webWhoAmI(settings) {
   const html = await res.text();
   const me = html.match(/<meta name="user-login" content="([^"]+)"/)?.[1];
   if (!me) throw new SignedOut("not signed in to GitHub in this browser");
-  if (/Single sign-on to see results/i.test(html)) throw new SignedOut("single sign-on expired: open GitHub in the browser and sign in");
+  // "Single sign-on to see results in the <b>A</b> and <b>B</b> organizations": name them, so a sign-in to only one
+  // of them shows which one is still missing.
+  const sso = html.match(/Single sign-on to see results(?: in the ([\s\S]{1,300}?) organizations?)?/i);
+  if (sso) {
+    const orgs = (sso[1] || "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+    throw new SignedOut(`single sign-on expired${orgs ? ` for ${orgs}` : ""}: open GitHub in the browser and sign in`);
+  }
   return me;
 }
 

@@ -42,7 +42,11 @@
     }
   }
 
-  chrome.storage.local.get("reReview").then((s) => render(s.reReview));
   chrome.storage.onChanged.addListener((c) => c.reReview && render(c.reReview.newValue));
-  chrome.runtime.sendMessage({ type: "refresh" }); // fresh data on every page load
+  // Fresh data on every page load. While the bar shows an error (signed out, SSO expired), skip the 30 s throttle:
+  // this page load may be the one right after signing in.
+  chrome.storage.local.get("reReview").then((s) => {
+    render(s.reReview);
+    chrome.runtime.sendMessage({ type: "refresh", force: !!s.reReview?.error });
+  });
 })();

@@ -322,16 +322,24 @@ try {
     let bar = await page.locator("#ghc-bar").innerText().catch(() => "");
     await page.screenshot({ path: shot("4-sso-expired") });
     check(11, "the bar says single sign-on expired", /single sign-on expired/i.test(bar), bar);
+    check(11, "and names the organization", /for Acme:/.test(bar), bar);
+
+    console.log("\n11b. Signing in again clears it on the next page load (no waiting for the poll)");
+    world.ssoExpired = false;
+    await page.goto(`${WEB}/pulls/authored`);
+    await page.waitForFunction(() => !/single sign-on/i.test(document.querySelector("#ghc-bar")?.innerText || ""), null, { timeout: 5000 }).catch(() => {});
+    bar = await page.locator("#ghc-bar").innerText().catch(() => "");
+    check("11b", "the error is gone", !/single sign-on/i.test(bar), bar);
 
     console.log("\n12. Signed out of GitHub, no token");
     world.ssoExpired = false;
     world.signedIn = false;
     await poll();
-    world.signedIn = true; // only the extension's data is signed out; show the page
-    await page.goto(`${WEB}/pulls/authored`);
+    await page.goto(`${WEB}/pulls/authored`); // lands on the sign-in page, where the bar says why
     await page.waitForTimeout(1000);
     bar = await page.locator("#ghc-bar").innerText().catch(() => "");
     check(12, "the bar says not signed in", /not signed in/i.test(bar), bar);
+    world.signedIn = true;
   }
 } finally {
   await ctx.close();
