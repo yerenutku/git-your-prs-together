@@ -50,6 +50,7 @@ On the extensions page, click **Remove** on "Git Your PRs Together". This also d
 | Nothing happens on GitHub, no sticker | Open the options and check **Your GitHub** is the address you're browsing, then reload the tab. |
 | A red bar: "single sign-on expired" | Open GitHub and sign in again through your organization's single sign-on. The extension picks it up within a minute. |
 | A red bar: "not signed in to GitHub in this browser" | Sign in to that GitHub in this browser. |
+| Firefox/Zen: "not signed in" although you are | You're signed in inside a container (a Zen space, a Firefox container). Keep a GitHub tab open in it: the extension reads GitHub through that tab. |
 | Firefox: still nothing after saving | `about:addons` → the extension → **Permissions**: allow access to your GitHub site. |
 | "Developer mode extensions" warning when the browser starts | Expected for an extension loaded from a folder. Click it away; don't disable the extension. |
 | Notifications don't pop up | See [Set up notifications](#set-up-notifications-macos) above. |

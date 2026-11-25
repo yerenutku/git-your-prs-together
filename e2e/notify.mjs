@@ -64,8 +64,10 @@ const ctx = await chromium.launchPersistentContext(profile, {
 });
 
 // Pages (and the content scripts' own fetches) go to the fake GitHub too.
+const routed = []; // URLs the pages (and their content scripts) asked for
 await ctx.route(`${WEB}/**`, async (route) => {
   const r = route.request();
+  routed.push(r.url());
   const out = handle(world, { url: r.url(), method: r.method(), body: r.postData(), headers: r.headers() });
   if (out.redirect) return route.fulfill({ status: 302, headers: { location: WEB + out.redirect } });
   await route.fulfill({
@@ -311,6 +313,43 @@ try {
   await page.screenshot({ path: shot("3-after-opening") });
   check(10, "after opening #11, nothing on it is new any more", m.chip11 && !/new/.test(m.chip11) && !m.authoredHot, m);
   check(10, "after opening #21, My threads has nothing new", m.threadsCount === null, m);
+
+  // ---- Firefox containers: GitHub signed in only inside a container (Zen space), the background's requests aren't ----
+  if (mode === "session") {
+    console.log("\n10b. Signed in only in the GitHub tab (a Firefox container): the data comes through the tab");
+    world.signedInInTabsOnly = true;
+    await sw.evaluate(() => (self.__testTabRelay = true)); // the Firefox path, in Chromium
+    await page.goto(`${WEB}/pulls/authored`);
+    await page.waitForTimeout(500);
+    routed.length = 0;
+    await poll();
+    let st = await sw.evaluate(() => chrome.storage.local.get(["authored", "myThreads"]));
+    check("10b", "my PRs and threads still load, without an error", st.authored?.me === ME && !st.authored?.error && st.myThreads?.me === ME && st.authored.items.some((i) => i.number === 11), { me: st.authored?.me, error: st.authored?.error });
+    check("10b", "…read through the open tab", routed.some((u) => u.includes("/pulls?q=")) && routed.some((u) => u.includes("/page_data/")), routed.slice(0, 5));
+
+    console.log("\n10b2. …also through a tab without this version's page scripts (opened before an update)");
+    await sw.evaluate(() => chrome.scripting.unregisterContentScripts({ ids: ["pages"] }));
+    await page.goto(`${WEB}/pulls/authored`);
+    await page.waitForTimeout(500);
+    const bare = await page.evaluate(() => !document.querySelector("[data-ghc-threads], #ghc-bar"));
+    await sw.evaluate(() => chrome.storage.local.remove("authored"));
+    routed.length = 0;
+    await poll();
+    st = await sw.evaluate(() => chrome.storage.local.get("authored"));
+    check("10b2", "the tab has none of the extension's page scripts, and the data still loads through it", bare && st.authored?.me === ME && !st.authored?.error && routed.some((u) => u.includes("/pulls?q=")), { bare, me: st.authored?.me, error: st.authored?.error });
+    await sw.evaluate(() => syncPageScripts());
+
+    console.log("\n10c. …and no GitHub tab open: say how to fix it");
+    await page.goto("about:blank");
+    await poll();
+    st = await sw.evaluate(() => chrome.storage.local.get("authored"));
+    check("10c", "the error says to keep a GitHub tab open", /keep a GitHub tab open/.test(st.authored?.error || ""), st.authored?.error);
+    check("10c", "the PRs from before stay listed", st.authored?.items?.some((i) => i.number === 11), st.authored?.items?.length);
+
+    world.signedInInTabsOnly = false;
+    await sw.evaluate(() => (self.__testTabRelay = false));
+    await poll();
+  }
 
   // ---- when the data can't be read, say so (instead of quietly showing nothing) ----
   if (mode === "session") {

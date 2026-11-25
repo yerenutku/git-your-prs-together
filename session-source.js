@@ -16,17 +16,69 @@ const webBase = (settings) => "https://" + new URL(settings.apiBase).hostname.re
 class SignedOut extends Error {}
 const signedOutUrl = (res) => /^\/(login|session|enterprises\/[^/]+\/sso)\b/.test(new URL(res.url).pathname);
 
+// Firefox keeps one cookie jar per container (Zen spaces, Multi-Account Containers), and an extension's own requests
+// always use the default one. When GitHub is signed in only inside a container, the requests go through an open
+// GitHub tab instead: a script injected into it for each request fetches as the page, with that container's cookies.
+// Injected rather than the tab's own content scripts, so a tab opened before an update (old scripts) works too.
+// Chromium has no containers and never takes this path. settings.viaTab: the tab this refresh uses, if any.
+const tabRelay = () => (typeof IS_FIREFOX !== "undefined" && IS_FIREFOX) || self.__testTabRelay === true;
+
+async function sessionFetch(url, init, settings) {
+  if (settings.viaTab == null) return fetch(url, init);
+  const [injected] = await chrome.scripting.executeScript({
+    target: { tabId: settings.viaTab },
+    args: [url, init],
+    // Runs in the tab. Firefox: content.fetch is the page's own fetch (a content script's fetch is the extension's).
+    func: async (url, init) => {
+      try {
+        if (new URL(url).origin !== location.origin) return { error: "not this GitHub" };
+        const r = typeof content !== "undefined" && typeof content?.fetch === "function" ? await content.fetch(url, init) : await fetch(url, init);
+        return { status: r.status, url: r.url, body: await r.text() };
+      } catch (e) {
+        return { error: String(e) };
+      }
+    },
+  });
+  const r = injected?.result;
+  if (!r || r.error) throw new Error(`GitHub tab: ${r?.error || "no answer"}`);
+  return { ok: r.status >= 200 && r.status < 300, status: r.status, url: r.url, text: async () => r.body, json: async () => JSON.parse(r.body) };
+}
+
 async function web(path, settings) {
-  const res = await fetch(webBase(settings) + path, { headers: WEB_HEADERS, credentials: "include" });
+  const res = await sessionFetch(webBase(settings) + path, { headers: WEB_HEADERS, credentials: "include" }, settings);
   if (signedOutUrl(res)) throw new SignedOut("not signed in to GitHub in this browser");
   if (!res.ok) throw new Error(`${res.status} ${path}`);
   return res.json();
 }
 
-// Who is signed in, and whether the org's single sign-on still lets us see its PRs (if not, lists come back empty
-// without an error, so this is checked on the page itself).
+// Who is signed in (see whoAmIOnce). In Firefox, when the extension's own requests are signed out, the GitHub tabs
+// are tried, most recently used first; the first signed-in one carries the rest of this refresh.
 async function webWhoAmI(settings) {
-  const res = await fetch(webBase(settings) + "/pulls/authored", { credentials: "include" });
+  settings.viaTab = null;
+  try {
+    return await whoAmIOnce(settings);
+  } catch (e) {
+    if (!(e instanceof SignedOut) || !tabRelay()) throw e;
+    const tabs = (await chrome.tabs.query({ url: webBase(settings) + "/*" })).filter((t) => !t.discarded).sort((a, b) => (b.lastAccessed || 0) - (a.lastAccessed || 0));
+    let last = null;
+    for (const t of tabs) {
+      settings.viaTab = t.id;
+      try {
+        return await whoAmIOnce(settings);
+      } catch (err) {
+        last = err;
+      }
+    }
+    settings.viaTab = null;
+    if (last) throw last; // the tab's own answer: e.g. its single sign-on expired, or why it couldn't be read
+    throw new SignedOut("not signed in to GitHub here. If you sign in inside a container (Zen space, Firefox container), keep a GitHub tab open there");
+  }
+}
+
+// Whether the org's single sign-on still lets us see its PRs (if not, lists come back empty without an error, so
+// this is checked on the page itself).
+async function whoAmIOnce(settings) {
+  const res = await sessionFetch(webBase(settings) + "/pulls/authored", { credentials: "include" }, settings);
   if (signedOutUrl(res)) throw new SignedOut("not signed in to GitHub in this browser");
   const html = await res.text();
   const me = html.match(/<meta name="user-login" content="([^"]+)"/)?.[1];

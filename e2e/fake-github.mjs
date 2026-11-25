@@ -12,6 +12,7 @@
 //   dismissed:   [{ repo, number, title, author, approvedSha, headSha, approvedAt, dismissedAt, dismissedBy }],
 //   signedIn: true,      // the browser's GitHub session; false = every page redirects to /login
 //   ssoExpired: false,   // signed in, but the org's single sign-on expired (lists come back empty)
+//   signedInInTabsOnly: false, // like a Firefox container: pages are signed in, the extension's own requests aren't
 //   pageData: true,      // false = GitHub's page JSON is unavailable (e.g. GitHub changed it): the token must take over
 //   picker: { company: [logins], requested: [ids] },     // PR pages get a reviewers picker that behaves like GitHub's
 //   contributors: { "owner/repo": [{ login, commits }] }, // /<repo>/graphs/contributors-data (first call: 202, computing)
@@ -369,7 +370,9 @@ export function serve(getWorld) {
       const target = decodeURIComponent(req.url.slice(1)); // /<full original url>
       let out;
       try {
-        out = handle(getWorld(), { url: target, method: req.method, body, headers: req.headers });
+        // This server only sees the service worker's requests (pages go through the browser's route).
+        const world = getWorld();
+        out = handle(world.signedInInTabsOnly ? Object.create(world, { signedIn: { value: false } }) : world, { url: target, method: req.method, body, headers: req.headers });
       } catch (e) {
         out = { status: 500, json: { message: String(e) } };
       }
