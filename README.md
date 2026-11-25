@@ -98,7 +98,8 @@ The extension is plain JavaScript (Manifest V3); there's no build step, and this
 | `npm run e2e:host` | Picking a GitHub: the welcome on install, refusing other sites, the page scripts following the chosen host, switching keeps settings. |
 | `npm run e2e:check -- <paths>` | Loads the extension into a signed-in test browser, opens real GitHub pages and reports what it drew, plus a screenshot in `e2e/out/`. |
 | `npm run e2e:login` | Opens the test browser to sign in; quit it with Cmd+Q afterwards. |
-| `npm run package` | Builds the store uploads in `dist/`: `chrome.zip` (Chrome Web Store, Edge Add-ons) and `firefox.zip` (addons.mozilla.org). |
+| `npm run package` | Builds the store uploads in `dist/`: `chrome-<version>.zip` (Chrome Web Store, Edge Add-ons), `firefox-<version>.zip` (addons.mozilla.org) and `firefox-<version>.xpi` (installing it locally). Runs before every `git push` too (`.githooks/pre-push`; once per clone: `git config core.hooksPath .githooks`). |
+| `npm run zen` | Runs the Firefox build in Zen with its own profile and reloads it when `dist/firefox` changes (INSTALL.md). |
 
 Releases are automatic: bump `version` in `manifest.json` and push to `main`. See [RELEASING.md](RELEASING.md).
 
@@ -122,6 +123,8 @@ The signed-in scripts (`e2e:check`, `e2e:login`, `e2e:reload`) open github.com u
 | `options.html` / `options.js` | Options and status page |
 | `e2e/` | Playwright tests and the fake GitHub |
 | `scripts/package.mjs` | Builds the per-browser store zips |
+| `scripts/zen.mjs` | `npm run zen` |
+| `.githooks/pre-push` | Rebuilds `dist/` before every push |
 | `scripts/publish-edge.mjs` | Submits a zip to Edge Add-ons (used by the release workflow) |
 | `.github/workflows/release.yml` | Tests every push; releases and submits to the stores when the version is new |
 | `PRIVACY.md` | Privacy policy (link it from the store listings) |

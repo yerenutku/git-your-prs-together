@@ -26,6 +26,10 @@ The first refresh can take up to a minute. After that, the "Authored by me", "My
 
 For Firefox, run `npm run package`, then open `about:debugging` → **This Firefox** → **Load Temporary Add-on** and pick `dist/firefox/manifest.json`. A temporary add-on is gone when Firefox restarts.
 
+**Zen** (or Firefox Developer Edition / Nightly), to keep it installed: set `xpinstall.signatures.required` to `false` in `about:config`, then `about:addons` → gear icon → **Install Add-on From File** → `dist/firefox-<version>.xpi`. Regular Firefox only installs Mozilla-signed add-ons (the store version).
+
+**`npm run zen`** opens Zen with the Firefox build in a profile of its own (`~/.git-your-prs-together-zen`, keeps your sign-in) and reloads the extension whenever `dist/firefox` is rebuilt. Another Firefox-based browser: `FIREFOX=/path/to/its/binary npm run zen`.
+
 ## Set up notifications (macOS)
 1. Open the extension's options: on the extensions page, click **Details**, then **Extension options** (Firefox: `about:addons` → the extension → **Preferences**).
 2. Under **Notifications**, choose which ones you want.

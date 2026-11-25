@@ -7,3 +7,4 @@ dist/
 # Local only: Claude settings and icon drafts
 .claude/
 generated_images/
+store-images/

@@ -1,0 +1,5 @@
+#!/bin/sh
+# Rebuild dist/ (the store zips, the .xpi and dist/firefox) before every push, so what you test locally is what the
+# push releases. A running `npm run zen` reloads the extension by itself. Turn on once per clone:
+#   git config core.hooksPath .githooks
+npm run -s package || echo "pre-push: npm run package failed (the push goes ahead)"

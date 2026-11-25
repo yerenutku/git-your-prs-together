@@ -12,6 +12,7 @@ A Manifest V3 extension (plain JS, no build) for github.com and GitHub Enterpris
 
 ## Rules
 - **Bump `version` in manifest.json on every change.** A pushed new version is released automatically: GitHub release and store submissions (RELEASING.md). Never remove or change the manifest `key`: it pins the extension ID (`nljndnofcmfpcpmnknkakchcgibglplm`) that the stored data and notification log hang on. `scripts/package.mjs` leaves it out of the store zips (the stores assign their own IDs).
+- **After pushing, `dist/` is fresh** (`.githooks/pre-push` runs `npm run package`; needs `git config core.hooksPath .githooks`): the user tests that build locally, in Zen via `npm run zen` (auto-reloads) or with `dist/firefox-<version>.xpi`.
 - **Test before saying it works.** `npm run e2e:notify`, `npm run e2e:reviewers` and `npm run e2e:host` (fake GitHub, no sign-in) must pass. For real pages run `npm run e2e:check -- <paths>` and look at the screenshot. Extend the fake world and the story when behaviour changes.
 - Content scripts check `GHC.alive()` in every observer, timer and listener: after an extension reload the old copy must stop.
 - **Never type into, pick in, or close-after-typing GitHub's pickers on real PRs.** The reviewers picker saves on close and drops the selected reviewers its search hides. This removed 4 reviewers from a real PR once. Test pickers against the fake.

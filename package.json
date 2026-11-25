@@ -9,7 +9,8 @@
     "e2e:notify": "node e2e/notify.mjs",
     "e2e:reviewers": "node e2e/reviewers.mjs",
     "e2e:host": "node e2e/host.mjs",
-    "package": "node scripts/package.mjs"
+    "package": "node scripts/package.mjs",
+    "zen": "node scripts/zen.mjs"
   },
   "devDependencies": {
     "playwright": "1.52.0"

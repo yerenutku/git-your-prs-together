@@ -1,6 +1,7 @@
 // Builds the store uploads from this folder:
 //   dist/chrome/  + dist/chrome-<version>.zip    Chrome Web Store and Edge Add-ons (manifest.json as is)
 //   dist/firefox/ + dist/firefox-<version>.zip   addons.mozilla.org (background page instead of a service worker, gecko settings)
+//   dist/firefox-<version>.xpi                   the same zip, for installing it locally
 //
 //   npm run package
 import { execFileSync } from "node:child_process";
@@ -51,3 +52,7 @@ for (const [name, m] of Object.entries(variants)) {
   execFileSync("zip", ["-r", "-X", "-q", zip, "."], { cwd: dir });
   console.log(`${path.relative(ROOT, zip)}  (${(fs.statSync(zip).size / 1024).toFixed(0)} KB)`);
 }
+// The same Firefox zip as an .xpi, for "Install Add-on From File" in a Firefox-based browser that allows unsigned
+// add-ons (Zen, Firefox Developer Edition / Nightly with xpinstall.signatures.required off). Not uploaded anywhere.
+fs.copyFileSync(path.join(DIST, `firefox-${manifest.version}.zip`), path.join(DIST, `firefox-${manifest.version}.xpi`));
+console.log(`dist/firefox-${manifest.version}.xpi  (local install)`);
