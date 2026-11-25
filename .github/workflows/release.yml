@@ -1,17 +1,18 @@
-# Every push and pull request: the fake-GitHub tests.
-# Every push to main with a new version in manifest.json: build the zips, make a GitHub release (tag v<version>) and
-# submit it to each store whose secrets are set. Pushing without bumping the version only runs the tests.
+# Every push to main and every pull request: the fake-GitHub tests. Nothing is released.
+# Pushing a tag v<version> (it must match manifest.json): run the tests, build the zips, make a GitHub release and
+# submit it to each store whose secrets are set.
 # RELEASING.md explains the secrets and the one-time manual first submission per store.
 name: Test and release
 
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
   workflow_dispatch:
     inputs:
       republish:
-        description: "Submit the current version to the stores again (after a store step failed)"
+        description: "Submit this version to the stores again (after a store step failed). Run it on the version's tag."
         type: boolean
         default: false
 
@@ -41,7 +42,10 @@ jobs:
 
   release:
     needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'pull_request'
+    concurrency: # one release at a time, even when two tags are pushed together
+      group: release
+      cancel-in-progress: false
     runs-on: ubuntu-24.04 # Playwright 1.52 has no browsers for newer Ubuntu
     permissions:
       contents: write
@@ -66,10 +70,14 @@ jobs:
         with:
           node-version: 22
 
-      - name: Is this version new?
+      - name: Check the tag and whether it's already released
         id: v
         run: |
           version=$(node -p 'require("./manifest.json").version')
+          if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match manifest.json version $version (expected v$version)."
+            exit 1
+          fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
           if gh release view "v$version" >/dev/null 2>&1; then
             echo "new=false" >> "$GITHUB_OUTPUT"
@@ -87,7 +95,7 @@ jobs:
         run: >
           gh release create "v${{ steps.v.outputs.version }}"
           dist/chrome-${{ steps.v.outputs.version }}.zip dist/firefox-${{ steps.v.outputs.version }}.zip
-          --target "$GITHUB_SHA" --title "v${{ steps.v.outputs.version }}" --generate-notes
+          --verify-tag --title "v${{ steps.v.outputs.version }}" --generate-notes
 
       - name: Chrome Web Store
         if: (steps.v.outputs.new == 'true' || inputs.republish) && env.CWS_REFRESH_TOKEN != ''

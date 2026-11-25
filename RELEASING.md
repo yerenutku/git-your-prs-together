@@ -1,18 +1,25 @@
 # Releasing
 
 ## How a release happens
-1. Bump `version` in `manifest.json` (every change does anyway) and push to `main`.
-2. GitHub Actions (`.github/workflows/release.yml`) runs the fake-GitHub tests. If they pass and that version has no GitHub release yet, it:
+Only a pushed version tag releases. Pushing to `main` never does.
+
+1. Bump `version` in `manifest.json` (every extension change does anyway), commit and push to `main`.
+2. When you want to release that version, tag the commit and push the tag:
+   ```bash
+   git tag v<version>
+   git push origin v<version>
+   ```
+3. GitHub Actions (`.github/workflows/release.yml`) runs the fake-GitHub tests. If they pass and the tag matches the version in `manifest.json`, it:
    - builds `dist/chrome-<version>.zip` and `dist/firefox-<version>.zip` (`npm run package`);
    - creates the GitHub release `v<version>` with both zips attached;
    - submits the version to each store whose secrets are set (Chrome Web Store, Firefox Add-ons, Edge Add-ons).
-3. Each store reviews it (hours to a few days) before users get it.
+4. Each store reviews it (hours to a few days) before users get it.
 
-A push without a version bump only runs the tests. Pull requests only run the tests.
+Pushes to `main` and pull requests only run the tests, so docs such as `PRIVACY.md` can change without a release. A tag that doesn't match `manifest.json` fails the release job.
 
-**One review at a time.** A store can refuse a new upload while the previous version is still in review. Bump the version when you want a release, not on every small push.
+**One review at a time.** A store can refuse a new upload while the previous version is still in review. Several versions can pile up on `main`; tag only the one you want to release.
 
-**A store step failed?** Fix the cause, then run the workflow by hand (Actions → Test and release → Run workflow) with **republish** ticked. It submits the current version to the stores again without making a new GitHub release.
+**A store step failed?** If the cause is outside the code (such as a secret), fix it, then run the workflow by hand (Actions → Test and release → Run workflow), pick the version's **tag** under "Use workflow from" and tick **republish**. It submits that version to the stores again without making a new GitHub release. If the fix needs a code or workflow change, release it as a new version: a tag runs the files as they were when it was made.
 
 ## One-time setup per store
 The APIs can only update an extension that already exists in the store, so the first version is uploaded by hand. After that, add the secrets in the GitHub repo under Settings → Secrets and variables → Actions. A store without secrets is skipped.

@@ -101,7 +101,7 @@ The extension is plain JavaScript (Manifest V3); there's no build step, and this
 | `npm run package` | Builds the store uploads in `dist/`: `chrome-<version>.zip` (Chrome Web Store, Edge Add-ons), `firefox-<version>.zip` (addons.mozilla.org) and `firefox-<version>.xpi` (installing it locally). Runs before every `git push` too (`.githooks/pre-push`; once per clone: `git config core.hooksPath .githooks`). |
 | `npm run zen` | Runs the Firefox build in Zen with its own profile and reloads it when `dist/firefox` changes (INSTALL.md). |
 
-Releases are automatic: bump `version` in `manifest.json` and push to `main`. See [RELEASING.md](RELEASING.md).
+To release, push a `v<version>` tag that matches `version` in `manifest.json`; pushing to `main` only runs the tests. See [RELEASING.md](RELEASING.md).
 
 The signed-in scripts (`e2e:check`, `e2e:login`, `e2e:reload`) open github.com unless you set `GHC_HOST=https://yourcompany.ghe.com` or put `{ "host": "https://yourcompany.ghe.com" }` in `e2e/local.json` (not committed).
 | `npm run e2e:reload` | Reloads the extension under an open GitHub tab and lists any errors. |
@@ -126,7 +126,7 @@ The signed-in scripts (`e2e:check`, `e2e:login`, `e2e:reload`) open github.com u
 | `scripts/zen.mjs` | `npm run zen` |
 | `.githooks/pre-push` | Rebuilds `dist/` before every push |
 | `scripts/publish-edge.mjs` | Submits a zip to Edge Add-ons (used by the release workflow) |
-| `.github/workflows/release.yml` | Tests every push; releases and submits to the stores when the version is new |
+| `.github/workflows/release.yml` | Tests pushes to `main` and pull requests; a `v<version>` tag releases and submits to the stores |
 | `PRIVACY.md` | Privacy policy (link it from the store listings) |
 
 ## License
