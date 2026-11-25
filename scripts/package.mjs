@@ -35,6 +35,8 @@ const variants = {
         strict_min_version: "140.0",
         data_collection_permissions: { required: ["none"] }, // nothing leaves the browser except to GitHub (PRIVACY.md)
       },
+      // Firefox for Android only reads data_collection_permissions from 142 on.
+      gecko_android: { strict_min_version: "142.0" },
     },
   },
 };
